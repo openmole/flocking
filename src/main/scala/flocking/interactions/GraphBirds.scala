@@ -1,4 +1,4 @@
-package flocking
+package flocking.interactions
 
 import flocking.datatypes._
 import flocking.birds._
