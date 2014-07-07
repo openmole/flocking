@@ -19,7 +19,7 @@ object TestVisu extends App {
     val maxAlignTurn: Angle = Angle(toRadians(5))
     val maxCohereTurn: Angle = Angle(toRadians(3))
     val maxSeparateTurn: Angle = Angle(toRadians(1.5))
-    val stepSize: Double = 1.5
+    val stepSize: Double = 2
   }
 
 
