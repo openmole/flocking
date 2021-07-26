@@ -1,7 +1,6 @@
 package flocking.engine
 
 import scala.math._
-import scala.collection._
 import scala.util.Random
 import java.awt.Color
 
@@ -13,19 +12,20 @@ import flocking.birds._
 import flocking.interactions._
 import flocking.birds._
 
-trait Model {
-  def worldWidth: Double
-  def worldHeight: Double
-  def envDivsHorizontal: Int
-  def envDivsVertical: Int
-  def populationSize: Int
-  def vision: Double
-  def visionObstacle: Double
-  def minimumSeparation: Double
-  def maxAlignTurn: Angle
-  def maxCohereTurn: Angle
-  def maxSeparateTurn: Angle
-  def stepSize: Double
+case class Model(
+  worldWidth: Double,
+  worldHeight: Double,
+  envDivsHorizontal: Int,
+  envDivsVertical: Int,
+  populationSize: Int,
+  vision: Double,
+  visionObstacle: Double,
+  minimumSeparation: Double,
+  maxAlignTurn: Angle,
+  maxCohereTurn: Angle,
+  maxSeparateTurn: Angle,
+  stepSize: Double) {
+
   def emptySpace: Int = new Color(0,0,0).getRGB()
 
   lazy val env = Environment.empty(emptySpace, envDivsHorizontal, envDivsVertical, worldWidth, worldHeight)

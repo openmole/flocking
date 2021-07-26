@@ -15,11 +15,11 @@ class ObstacleDataListener(delay: Int, inputPipe: String, inputMatrixSize: (Int,
   var fis: FileInputStream = null
   var continue: Boolean = true
 
-  def quit {
+  def quit() = {
     continue = false
   }
 
-  override def run() {
+  override def run() = {
     var i: Int = 0
     var j: Int = 0
     while(continue) {
@@ -47,7 +47,7 @@ class ObstacleDataListener(delay: Int, inputPipe: String, inputMatrixSize: (Int,
     }
   }
 
-  def skipRead(n: Int) {
+  def skipRead(n: Int) = {
     var skipCpt = 0
     while (skipCpt < n) {
       fis.read()

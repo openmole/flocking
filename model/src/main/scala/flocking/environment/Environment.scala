@@ -5,13 +5,14 @@ import flocking.tools._
 import flocking.datatypes._
 import scala.reflect.ClassTag
 
-trait Environment[T] {
-  val nCellsWide: Int
-  val nCellsHigh: Int
-  val width: Double
-  val height: Double
-  var pixels: Array[T]
-  val emptySpace: T
+case class Environment[T](
+  nCellsWide: Int,
+  nCellsHigh: Int,
+  width: Double,
+  height: Double,
+  var pixels: Array[T],
+  val emptySpace: T) {
+
   lazy val widthBoundsKeeper = DoubleBoundsKeeper(0, width)
   lazy val heightBoundsKeeper = DoubleBoundsKeeper(0, height)
   def set(i: Int, j: Int, v: T) = pixels(j * nCellsWide + i) = v
@@ -21,8 +22,9 @@ trait Environment[T] {
   //   val j = if (y == height) nCellsWide - 1 else y2j(y)
   //   get(i,j)
   // }
-  def set(x: Double, y: Double, v:T): Unit = 
+  def set(x: Double, y: Double, v:T): Unit =
     set(x2i(widthBoundsKeeper(x)),y2j(heightBoundsKeeper(y)), v)
+
   def get(x: Double, y: Double): T = 
     get(x2i(widthBoundsKeeper(x)),y2j(heightBoundsKeeper(y)))
   //def getTorus(x: Double, y: Double): T = 
@@ -51,24 +53,15 @@ trait Environment[T] {
 }
 
 object Environment {
-  def empty[T:ClassTag](f:T, _nCellsWide: Int, _nCellsHigh: Int, _width: Double, _height: Double): Environment[T] = new Environment[T] {
-    val nCellsWide = _nCellsWide
-    val nCellsHigh = _nCellsHigh
-    val width = _width
-    val height = _height
-    var pixels = Array.fill(nCellsHigh * nCellsWide)(f)
-    val emptySpace = f
-  }
 
-  // def from[T:ClassTag](data: Array[Array[T]], _nCellsWide: Int, _nCellsHigh: Int, _width: Double, _height: Double) = new Environment[T] {
-  //   val nCellsWide = _nCellsWide
-  //   val nCellsHigh = _nCellsHigh
-  //   val width = _width
-  //   val height = _height
-  //   var pixels = Array.tabulate(nCellsHigh)(j => 
-  //     Array.tabulate(nCellsWide)(i => 
-  //       data(j)(i)
-  //       ))
-  // }
+  def empty[T:ClassTag](f:T, _nCellsWide: Int, _nCellsHigh: Int, _width: Double, _height: Double): Environment[T] = Environment[T](
+    nCellsWide = _nCellsWide,
+    nCellsHigh = _nCellsHigh,
+    width = _width,
+    height = _height,
+    pixels = Array.fill(_nCellsHigh * _nCellsWide)(f),
+    emptySpace = f
+  )
+
 }
 

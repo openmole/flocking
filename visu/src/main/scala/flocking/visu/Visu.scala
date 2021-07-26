@@ -32,17 +32,19 @@ import flocking._
 import flocking.datatypes._
 import flocking.engine._
 
-// import flocking.Heading
-// import flocking.Model
-// import flocking.ModelIterator
+object Visu {
+  def apply(model: Model, pixelWidth: Int, pixelHeight: Int, frameDelay: Int, birdLength:Double, birdWidth:Double) =
+    new Visu(model, pixelWidth, pixelHeight, frameDelay, birdLength, birdWidth, fullScreen = false)
 
-trait Visu {
-  val model: Model
-  val pixelWidth: Int
-  val pixelHeight: Int
-  val frameDelay: Int
-  val birdLength:Double
-  val birdWidth:Double
+  def fullScreen(model: Model, frameDelay: Int, birdLength:Double, birdWidth:Double) =  {
+    val gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
+    val pixelWidth: Int = gd.getDisplayMode().getWidth()
+    val pixelHeight: Int = gd.getDisplayMode().getHeight()
+    new Visu(model, pixelWidth, pixelHeight, frameDelay, birdLength, birdWidth, fullScreen = true)
+  }
+}
+
+class Visu(model: Model, pixelWidth: Int, pixelHeight: Int, frameDelay: Int, birdLength:Double, birdWidth:Double, fullScreen: Boolean) {
 
   lazy val ge = GraphicsEnvironment.getLocalGraphicsEnvironment()
   lazy val gd = ge.getDefaultScreenDevice()
@@ -57,18 +59,27 @@ trait Visu {
   lazy val timer = new Timer(frameDelay, Surface)
   lazy val modelStepByStep = new ModelIterator(model)
 
-  lazy val visuMainFrame = new MainFrame(gc) {
-    preferredSize = new Dimension(pixelWidth, pixelHeight)
-    contents = Surface
-    background = Color.black
-  }
+  lazy val visuMainFrame =
+    if(!fullScreen)
+      new MainFrame(gc) {
+        preferredSize = new Dimension(pixelWidth, pixelHeight)
+        contents = Surface
+        background = Color.black
+      }
+    else
+      new MainFrame(gc) with Undecorated {
+        preferredSize = new Dimension(pixelWidth, pixelHeight)
+        contents = Surface
+        background = Color.black
+        gd.setFullScreenWindow(this.peer)
+      }
 
   def shapeBird(x: Double,y: Double,heading: Heading): Shape = {
     new Line2D.Double(
-      (x / model.worldWidth * pixelWidth + (birdLength / 2) * cos(heading.toDouble)),
-      (y / model.worldHeight * pixelHeight + (birdLength / 2) * sin(heading.toDouble)),
-      (x / model.worldWidth * pixelWidth - (birdLength / 2) * cos(heading.toDouble)),
-      (y / model.worldHeight * pixelHeight - (birdLength / 2) * sin(heading.toDouble))
+      (x / model.worldWidth * pixelWidth + (birdLength / 2) * cos(heading.toDouble())),
+      (y / model.worldHeight * pixelHeight + (birdLength / 2) * sin(heading.toDouble())),
+      (x / model.worldWidth * pixelWidth - (birdLength / 2) * cos(heading.toDouble())),
+      (y / model.worldHeight * pixelHeight - (birdLength / 2) * sin(heading.toDouble()))
     )
   }
 
@@ -78,26 +89,13 @@ trait Visu {
   def birdsShapes(): Iterable[Shape] =
     drawBirds(modelStepByStep.currentState.birds.map(b => (b.position.x, b.position.y, b.heading)))
 
-  // def birdsTransform(): Iterable[AffineTransform] =
-  //   modelStepByStep.currentState.birds.map(b => {
-  //       //b.position.x, b.position.y, b.heading
-  //       val af = new AffineTransform()
-  //       val xpos = b.position.x / model.worldWidth * pixelWidth
-  //       val ypos = b.position.y / model.worldHeight * pixelHeight
-  //       af.translate(xpos - birdImageWidth / 2.0, ypos - birdImageHeight / 2.0)
-  //       // af.rotate(b.heading.toDouble + Pi/2, xpos, ypos)
-        
-  //       af
-  //     }
-  //   )
-
-  def updateBackground() {
+  def updateBackground() = {
     val envWidth: Double = model.env.width
     val envHeight: Double = model.env.height
     // var i: Int = 0
     // var j: Int = 0
     // i = 0
-    // while (i < pixelWidth) { 
+    // while (i < pixelWidth) {
     //   j = 0
     //   while (j < pixelHeight) {
     //     if (model.env.get((i + 0.5) * envWidth / pixelWidth, (j + 0.5) * envHeight / pixelHeight) != 0) backgroundImage.setRGB(i,j,obstacleColorRGB)
@@ -122,10 +120,10 @@ trait Visu {
       g.clearRect(0,0,pixelWidth,pixelHeight)
       g.setColor(birdColor)
       //for {s <- obstaclesShapes} g.fill(s)
-      updateBackground
+      updateBackground()
       g.drawImage(backgroundImage, scaleBackgroundImage, null)
       g.setStroke(new BasicStroke(birdWidth.toFloat))
-      for {shape <- birdsShapes} g.draw(shape)
+      for {shape <- birdsShapes()} g.draw(shape)
       //for {af <- birdsTransform} g.drawImage(birdImage, af, null)
       // val af = new AffineTransform()
       // af.translate(-birdImageWidth / 2.0, -birdImageHeight / 2.0)
@@ -143,7 +141,7 @@ trait Visu {
       }
     }
 
-    def actionPerformed(e: ActionEvent) {
+    def actionPerformed(e: ActionEvent) = {
       modelStepByStep.step
       repaint()
     }
@@ -158,7 +156,7 @@ trait Visu {
       }
     }
     focusable = true
-    requestFocus
+    requestFocus()
   }
 
 
@@ -170,29 +168,7 @@ trait Visu {
 
     override def shutdown() = {
       timer.stop
-      super.shutdown
+      super.shutdown()
     }
   }
 }
-
-trait Fullscreen <: Visu {
-
-  lazy val pixelWidth: Int = gd.getDisplayMode().getWidth() 
-  lazy val pixelHeight: Int = gd.getDisplayMode().getHeight()
-
-  override lazy val visuMainFrame = new MainFrame(gc) with Undecorated {
-    preferredSize = new Dimension(pixelWidth, pixelHeight)
-    contents = Surface
-    background = Color.black
-    gd.setFullScreenWindow(this.peer)
-  }
-}
-
-// trait NoFullscreen <: Visu {
-
-//   override lazy val visuMainFrame = new MainFrame(gc) {
-//     preferredSize = new Dimension(pixelWidth, pixelHeight)
-//     contents = Surface
-//     background = Color.black
-//   }
-// }

@@ -22,8 +22,8 @@ trait Bird {
     val newHeading = updateHeading(flockmates.map(_._1), nearestNeighbour,
                      model.minimumSeparation,model.maxSeparateTurn,model.maxAlignTurn,model.maxCohereTurn,
                      model.env, model.visionObstacle)
-    val newPosition = model.Position(position.x + model.stepSize * cos(newHeading.toDouble),
-                                      position.y + model.stepSize * sin(newHeading.toDouble))
+    val newPosition = model.Position(position.x + model.stepSize * cos(newHeading.toDouble()),
+                                      position.y + model.stepSize * sin(newHeading.toDouble()))
     Bird(id, newPosition,newHeading)
   }
 
@@ -94,7 +94,7 @@ trait Bird {
   }
 
   def obstacleAt(env: Environment[Int], angle: Angle, distance: Double): Boolean = {
-    val sensorTheta = (heading + angle).toDouble
+    val sensorTheta = (heading + angle).toDouble()
     env.get(position.x + distance * cos(sensorTheta), position.y + distance * sin(sensorTheta)) != env.emptySpace
   }
 
@@ -107,8 +107,8 @@ trait Bird {
   // ifelse x-component = 0 and y-component = 0
   //   [ report heading ]
   //   [ report atan x-component y-component ]
-    val xComponent: Double = flockmates.map((b:Bird) => cos(b.heading.toDouble)).sum
-    val yComponent: Double = flockmates.map((b:Bird) => sin(b.heading.toDouble)).sum
+    val xComponent: Double = flockmates.map((b:Bird) => cos(b.heading.toDouble())).sum
+    val yComponent: Double = flockmates.map((b:Bird) => sin(b.heading.toDouble())).sum
     if (xComponent == 0 && yComponent == 0) heading
     else Heading.fromDouble(atan2(yComponent, xComponent))
   }
