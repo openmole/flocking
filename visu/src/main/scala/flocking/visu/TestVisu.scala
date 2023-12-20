@@ -40,11 +40,14 @@ object TestVisu extends App {
   )
 
 
-  val environment = Environment.buildEmpty(Visu.backgroundColorRGB, 100, 100, 100, 100)
+  val environment =
+    Environment(
+      Visu.backgroundColorRGB, 100, 100, 100, 100,
+      disc = Seq(Environment.Disc(0, 0, 30.0, Visu.obstacleColorRGB))
+    )
 
   // model.env.addDisc(model.worldWidth / 2.0, model.worldHeight / 2.0, 30.0, visu.obstacleColorRGB)
 
-  environment.addDisc(0, 0, 30.0, Visu.obstacleColorRGB)
 
   val random = new Random(42)
 

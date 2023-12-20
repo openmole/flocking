@@ -16,7 +16,7 @@ object Model {
 
   def oneStep(model: Model, g: GraphBirds): GraphBirds = model.buildGraph(model.updateBirds(g))
 
-  def randomInit(model: Model, environment: Environment[Int], random: Random): GraphBirds =
+  def randomInit(model: Model, environment: Environment, random: Random): GraphBirds =
     def randomBird(id: Int): Bird =
       Bird(
         id,
@@ -35,7 +35,7 @@ object Model {
     )
 
 
-  def start(model: Model, environment: Environment[Int], iterations: Int, random: Random) = run(model, iterations, randomInit(model, environment, random))
+  def start(model: Model, environment: Environment, iterations: Int, random: Random) = run(model, iterations, randomInit(model, environment, random))
 
 
 }
@@ -49,7 +49,7 @@ case class Model(
   maxAlignTurn: Angle,
   maxCohereTurn: Angle,
   maxSeparateTurn: Angle,
-  stepSize: Double) {
+  stepSize: Double):
 
 
 
@@ -73,7 +73,6 @@ case class Model(
   def distanceBetween(p1: Point, p2: Point): Double = torusDistance(worldWidth,worldHeight)(p1,p2)
 
 
-}
 
 def torusDistance(width:Double, height:Double)(p1: Point, p2: Point): Double = sqrt(pow(min(abs(p2.x - p1.x), width - abs(p2.x - p1.x)), 2) + pow(min(abs(p2.y - p1.y), height - abs(p2.y - p1.y)),2))
 

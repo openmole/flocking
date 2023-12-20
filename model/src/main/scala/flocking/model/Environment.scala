@@ -6,29 +6,26 @@ import flocking.model.tools._
 import scala.reflect.ClassTag
 
 
-case class Environment[T](
+case class Environment(
   nCellsWide: Int,
   nCellsHigh: Int,
   width: Double,
   height: Double,
-  var pixels: Array[T],
-  val emptySpace: T) {
+  private var pixels: Array[Int],
+  emptySpace: Int):
 
   lazy val widthBoundsKeeper = DoubleBoundsKeeper(0, width)
   lazy val heightBoundsKeeper = DoubleBoundsKeeper(0, height)
 
-  def set(i: Int, j: Int, v: T) = pixels(j * nCellsWide + i) = v
-  def get(i: Int, j: Int): T = pixels(j * nCellsWide + i)
+  private def set(i: Int, j: Int, v: Int) = pixels(j * nCellsWide + i) = v
+  def get(i: Int, j: Int): Int = pixels(j * nCellsWide + i)
   // def get(x: Double, y: Double): T = {
   //   val i = if (x == width) nCellsWide - 1 else x2i(x)
   //   val j = if (y == height) nCellsWide - 1 else y2j(y)
   //   get(i,j)
   // }
-  def set(x: Double, y: Double, v:T): Unit =
-    set(x2i(widthBoundsKeeper(x)),y2j(heightBoundsKeeper(y)), v)
-
-  def get(x: Double, y: Double): T =
-    get(x2i(widthBoundsKeeper(x)),y2j(heightBoundsKeeper(y)))
+  private def set(x: Double, y: Double, v: Int): Unit = set(x2i(widthBoundsKeeper(x)),y2j(heightBoundsKeeper(y)), v)
+  def get(x: Double, y: Double): Int = get(x2i(widthBoundsKeeper(x)),y2j(heightBoundsKeeper(y)))
   //def getTorus(x: Double, y: Double): T =
   // def getNormal(x: Double, y:Double): T = {
   //   val i = if (x == 1.0) nCellsWide - 1 else x2i(x)
@@ -43,35 +40,36 @@ case class Environment[T](
   def i2x(i: Int): Double = (((i:Double) / nCellsWide) * width) + (width / nCellsWide / 2.0)
   def j2y(j: Int): Double = (((j:Double) / nCellsHigh) * height) + (height / nCellsHigh / 2.0)
 
-  def addDisc(x:Double, y:Double, r:Double, fill: T) = {
-    val center = Point(x,y)
-    for (i <- 0 until nCellsWide; j<- 0 until nCellsHigh) {
-      if (Distance.torus(width, height)(center, Point(i2x(i),j2y(j))) <= r) {
-        set(i,j,fill)
-      }
-    }
-  }
-
-}
-
-object Environment {
-
-  def isEmpty[T](environment: Environment[T], x: Double, y: Double) = Environment.get(environment, x, y) == emptySpace(environment)
-  def emptySpace[T](environment: Environment[T]) = environment.emptySpace
-  def get[T](environment: Environment[T], x: Double, y: Double) = environment.get(x, y)
+  private def addDisc(d: Environment.Disc) =
+    val center = Point(d.x, d.y)
+    for
+      i <- 0 until nCellsWide
+      j <- 0 until nCellsHigh
+      if Distance.torus(width, height)(center, Point(i2x(i),j2y(j))) <= d.r
+    do set(i,j, d.fill)
 
 
-  def empty(width: Double, height: Double) =
-    buildEmpty[Int](0, 1, 1, width, height)
+object Environment:
 
-  def buildEmpty[T: ClassTag](f :T, _nCellsWide: Int, _nCellsHigh: Int, _width: Double, _height: Double) = Environment[T](
-    nCellsWide = _nCellsWide,
-    nCellsHigh = _nCellsHigh,
-    width = _width,
-    height = _height,
-    pixels = Array.fill(_nCellsHigh * _nCellsWide)(f),
-    emptySpace = f
-  )
+  case class Disc(x:Double, y:Double, r:Double, fill: Int)
 
-}
+  def isEmpty(environment: Environment, x: Double, y: Double) = Environment.get(environment, x, y) == emptySpace(environment)
+  def emptySpace(environment: Environment) = environment.emptySpace
+  def get(environment: Environment, x: Double, y: Double) = environment.get(x, y)
+
+  def empty(width: Double, height: Double) = apply(0, 1, 1, width, height)
+
+  def apply(f :Int, nCellsWide: Int, nCellsHigh: Int, width: Double, height: Double, disc: Seq[Disc] = Seq()) =
+    val env =
+      new Environment(
+        nCellsWide = nCellsWide,
+        nCellsHigh = nCellsHigh,
+        width = width,
+        height = height,
+        pixels = Array.fill(nCellsHigh * nCellsWide)(f),
+        emptySpace = f
+      )
+    disc.foreach(env.addDisc)
+    env
+
 

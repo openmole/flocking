@@ -32,29 +32,27 @@ import flocking._
 import flocking.model.datatypes._
 import flocking.model._
 
-object Visu {
-  def apply(model: Model, environment: Environment[Int], random: java.util.Random, pixelWidth: Int, pixelHeight: Int, frameDelay: Int, birdLength:Double, birdWidth:Double) =
+object Visu:
+  def apply(model: Model, environment: Environment, random: java.util.Random, pixelWidth: Int, pixelHeight: Int, frameDelay: Int, birdLength:Double, birdWidth:Double) =
     new Visu(model, environment, random, pixelWidth, pixelHeight, frameDelay, birdLength, birdWidth, fullScreen = false)
 
-  def fullScreen(model: Model, environment: Environment[Int], random: java.util.Random, frameDelay: Int, birdLength:Double, birdWidth:Double) =  {
+  def fullScreen(model: Model, environment: Environment, random: java.util.Random, frameDelay: Int, birdLength:Double, birdWidth:Double) =
     val gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
     val pixelWidth: Int = gd.getDisplayMode().getWidth()
     val pixelHeight: Int = gd.getDisplayMode().getHeight()
     new Visu(model, environment, random, pixelWidth, pixelHeight, frameDelay, birdLength, birdWidth, fullScreen = true)
-  }
 
-  class ModelIterator(model: Model, var currentState: GraphBirds) {
-    def step = {
+  class ModelIterator(model: Model, var currentState: GraphBirds):
+    def step =
       currentState = Model.oneStep(model, currentState)
-    }
-  }
+
 
   lazy val backgroundColorRGB:Int = new Color(0,0,0).getRGB()
   lazy val obstacleColorRGB:Int = new Color(0,0,255).getRGB()
   lazy val birdColor: Color = new Color(255,255,255)
-}
 
-class Visu(model: Model, environment: Environment[Int], random: java.util.Random, pixelWidth: Int, pixelHeight: Int, frameDelay: Int, birdLength:Double, birdWidth:Double, fullScreen: Boolean) {
+
+class Visu(model: Model, environment: Environment, random: java.util.Random, pixelWidth: Int, pixelHeight: Int, frameDelay: Int, birdLength:Double, birdWidth:Double, fullScreen: Boolean) {
 
   lazy val ge = GraphicsEnvironment.getLocalGraphicsEnvironment()
   lazy val gd = ge.getDefaultScreenDevice()
@@ -68,19 +66,18 @@ class Visu(model: Model, environment: Environment[Int], random: java.util.Random
   lazy val modelStepByStep = new Visu.ModelIterator(model, Model.randomInit(model, environment, random))
 
   lazy val visuMainFrame =
-    if(!fullScreen)
-      new MainFrame(gc) {
+    if !fullScreen
+    then
+      new MainFrame(gc):
         preferredSize = new Dimension(pixelWidth, pixelHeight)
         contents = Surface
         background = Color.black
-      }
     else
-      new MainFrame(gc) with Undecorated {
+      new MainFrame(gc) with Undecorated:
         preferredSize = new Dimension(pixelWidth, pixelHeight)
         contents = Surface
         background = Color.black
         gd.setFullScreenWindow(this.peer)
-      }
 
   def shapeBird(x: Double,y: Double,heading: Heading): Shape = {
     new Line2D.Double(

@@ -22,53 +22,78 @@ import java.util.Random
 object Behaviour:
 
   def countGroups(gb: GraphBirds): Int = countGroups(gb, 0, (0 until gb.birds.size).toSet)
+
   def countGroups(gb: GraphBirds, nclustersFound: Int, remaining: Set[Int]): Int =
-    if (remaining.size == 0) nclustersFound
+    if remaining.isEmpty
+    then nclustersFound
     else countGroups(gb, nclustersFound + 1, remaining -- extractComponent(gb, remaining.head, Set()))
 
   def extractComponent(gb: GraphBirds, start: Int, visited: Set[Int]): Set[Int] =
-    if gb.birds.size == 0
+    if gb.birds.isEmpty
     then Set()
     else
-      val neighbours: Seq[Int] = gb.flockmates(start)
-      if (neighbours.size == 0) Set(start)
-      else neighbours.foldLeft(visited + start)((a:Set[Int], b:Int) => if (!a.contains(b)) extractComponent(gb, b, a) else a)
-
+      val neighbours = gb.flockmates(start)
+      if neighbours.isEmpty
+      then Set(start)
+      else
+        neighbours.foldLeft(visited + start): (a, b) =>
+          if !a.contains(b)
+          then extractComponent(gb, b, a)
+          else a
 
   def nearestNeighbour(d: DistMatrix)(i: Int, birds: Seq[Bird]): Int =
-    birds.indices.minBy(j => if (i != j) d(i, j) else Double.MaxValue)
+    birds.indices.minBy: j =>
+      if i != j
+      then d(i, j)
+      else Double.MaxValue
 
   def voronoiNeighbours(birds: Seq[Bird], dm: DistMatrix): Seq[Seq[Int]] =
     val nnf = nearestNeighbour(dm)_
-    val nn = for {i <- birds.indices} yield nnf(i, birds)
-    for {i <- birds.indices} yield voronoiNeighbours(birds, nn, i)
+    val nn =
+      for i <- birds.indices
+      yield nnf(i, birds)
+
+    for i <- birds.indices
+    yield voronoiNeighbours(birds, nn, i)
 
   def voronoiNeighbours(birds: Seq[Bird], nearestNeigh: Seq[Int], i: Int): Seq[Int] =
-    for {j <- birds.indices if ((i != j) && nearestNeigh(j) == i)} yield j
+    for
+      j <- birds.indices
+      if (i != j) && nearestNeigh(j) == i
+    yield j
 
   def kNearestNeighbours(k: Int, birds:Seq[Bird], dm: DistMatrix): Seq[Seq[Int]] =
+
     def insert(x: Int, k: Int, nn: List[Int], distFromI: Int => Double): List[Int] =
-      if (k == 0) List()
-      else if (nn.size == 0) List(x)
-      else if (distFromI(x) < distFromI(nn.head)) (x :: nn) take k
-      else nn.head :: insert(x, k - 1, nn.tail, distFromI)
+      if k == 0
+      then List()
+      else
+        if nn.isEmpty
+        then List(x)
+        else
+          if distFromI(x) < distFromI(nn.head)
+          then (x :: nn) take k
+          else nn.head :: insert(x, k - 1, nn.tail, distFromI)
 
     def knn(i: Int): Seq[Int] =
-      birds.indices.foldRight(List[Int]())((j,nn) => if (j == i) nn else insert(j, k, nn, {dm(i,_)}))
+      birds.indices.foldRight(List[Int]()): (j,nn) =>
+        if j == i
+        then nn
+        else insert(j, k, nn, {dm(i,_)})
 
-    birds.indices.map(knn(_))
+    birds.indices.map(knn)
 
 
   def distBetween(neighbours: Seq[Seq[Int]], dm: DistMatrix): Seq[Seq[Double]] =
     neighbours.indices.map((i: Int) => neighbours(i).map((j: Int) => dm(i,j)))
 
-  def sumOver(is: Range, f: Int => Double): Double = (is map f).sum
-  def averageOver(is: Range, f: Int => Double): Double =
-    sumOver(is, f) / (is.size: Double)
-
   def relativeDiffusion(
     neighboursDistAtT1: Seq[Seq[Double]],
     neighboursDistAtT2: Seq[Seq[Double]]): Double =
+
+    def sumOver(is: Range, f: Int => Double): Double = (is map f).sum
+    def averageOver(is: Range, f: Int => Double): Double = sumOver(is, f) / is.size.toDouble
+
     averageOver(
       neighboursDistAtT1.indices,
       i =>
@@ -80,19 +105,8 @@ object Behaviour:
           )
     )
 
-
-  //abstract class AbstractCollector[S, +T]
-//  case class Collector[S, +T](when: Int, f: S => Val[T])  {
-//    def collect(modelstate: S): Val[T] = f(modelstate)
-//  }
-//
-//  case class Val[+T](f: T)
-
   def countGroups(model: Model, state: GraphBirds): Double =
     countGroups(state) / (model.populationSize.toDouble)
-
-//  def countGroupsCollector(step: Int, model: Model): Collector[GraphBirds, Double] =
-//    Collector(step, { (s: GraphBirds) => Val(collectCountGroups(model, s)) })
 
   def relativeDiffusion(model: Model, state1: GraphBirds, state2: GraphBirds): Double =
     val dist1 =
@@ -107,65 +121,24 @@ object Behaviour:
 
     relativeDiffusion(dist1, dist2)
 
-
-//  def relativeDiffusionCollector(model: Model): Collector[GraphBirds, Double] =
-//    Collector(200, { (s1:GraphBirds) =>
-//      Collector(300, { (s2: GraphBirds) => Val(collectRelativeDiffusion(model, s1)(s2))})
-//    })
-
   def velocity(model: Model, state1: GraphBirds, state2: GraphBirds): Double =
-    (state1.birds.sortBy(_.id) zip state2.birds.sortBy(_.id)).map(x => model.distanceBetween(x._1.position, x._2.position)).sum / state1.birds.size.toDouble
+    val distances =
+      (state1.birds.sortBy(_.id) zip state2.birds.sortBy(_.id)).map: (o, n) =>
+        model.distanceBetween(o.position, n.position)
 
-//  def velocityCollector(model: Model): Collector[GraphBirds, Double] =
-//    Collector(298, { (s1:GraphBirds) =>
-//      Collector(300, { (s2:GraphBirds) => Val(collectVelocity(model, s1)(s2))})
-//    })
-//
-//  def constructDescription(model: Model, collectors: Seq[Collector[GraphBirds, Double]], result: List[Val[GraphBirds, Double]], gb: GraphBirds, maxIter: Int, iter: Int): Seq[Double] =
-//    if iter >= maxIter
-//    then
-//      val updatedCollectors =
-//        collectors.map {
-//          case x@Collector(i, f) if (i == iter) => f(gb)
-//          case x => x
-//        }
-//      val updatedState = Model.oneStep(model, gb)
-//      constructDescription(model, updatedCollectors, updatedState, maxIter, iter + 1)
-//    else collectors.collect { case Val(x) => x }
-//    //else collectors.map { case Val(x) => x }
-//
-//  def defaultDescription(model: Model, environment: Environment[Int], maxIter: Int, maxIter: Int, random: Random) =
-//    constructDescription(model, List(countGroupsCollector(model), relativeDiffusionCollector(model), velocityCollector(model)), Model.randomInit(model, environment, random), maxIter, 0)
+    distances.sum / distances.size
 
-  def computeBehaviour(model: Model, environment: Environment[Int], random: Random) =
-
-    val steps = 500
-    val s1 = 449
-    val s2 = 499
-//    val td = (math.min(model.worldWidth, model.worldHeight) / (4 * model.stepSize)).toInt
-//    val tv = (math.min(model.worldWidth, model.worldHeight) / (2 * model.stepSize)).toInt
+  def computeBehaviour(
+    model: Model,
+    environment: Environment,
+    random: Random,
+    steps: Int = 500,
+    s1: Int = 449,
+    s2: Int = 499) =
 
     val states = Iterator.iterate(Model.randomInit(model, environment, random))(Model.oneStep(model, _)).take(steps).toArray
-
-//    val diffusion =
-//      states.map { s =>
-//         val s1 = iteration - (s - 1) * td
-//         val s2 = iteration - s * td
-//        relativeDiffusion(model, states(s1 - 1), states(s2 - 1))
-//      }.sum / 5
-
-
     val diffusion = relativeDiffusion(model, states(s1), states(s2))
-
-//    val velocity =
-//      (1 to 5).map { s =>
-//        val s1 = iteration - (s - 1) * tv
-//        val s2 = iteration - s * tv
-//        Behaviour.velocity(model, states(s1 - 1), states(s2 - 1))
-//      }.sum / 5
-
     val velocity = Behaviour.velocity(model, states(s1), states(s2))
-
     val bigest = states(s2).flockmates.map(_.size).max.toDouble
 
     Seq(diffusion, velocity, bigest)
@@ -175,8 +148,8 @@ import datatypes.*
 
 import java.util.Random
 import scala.util.Random
-trait DistMatrix:
-  val distances: Vector[Vector[Double]]
+
+case class DistMatrix(distances: Vector[Vector[Double]]):
   def apply(i: Int,j: Int): Double =
     if (i == j) 0
     else if (i < j) distances(i)(j - i - 1)
@@ -184,25 +157,41 @@ trait DistMatrix:
 
 
 object DistMatrix:
-  def apply(points: Seq[Point], distFunc: (Point, Point) => Double): DistMatrix = new DistMatrix {
-    val distances: Vector[Vector[Double]] = (for {i <- 0 until (points.size - 1)} yield (for {j <- i+1 until points.size} yield distFunc(points(i), points(j))).toVector).toVector
-  }
+  def apply(points: Seq[Point], distFunc: (Point, Point) => Double): DistMatrix =
+    def distances: Vector[Vector[Double]] =
+      (for {i <- 0 until (points.size - 1)} yield (for {j <- i + 1 until points.size} yield distFunc(points(i), points(j))).toVector).toVector
+
+    DistMatrix(distances)
+
   def euclidean(p1: Point, p2: Point): Double = math.sqrt(math.pow(p1.x - p2.x, 2) + math.pow(p1.y - p2.y,2))
 
 
-object BehaviourTest extends App {
+object BehaviourTest extends App:
+
+//  val model =
+//    Model(
+//      worldWidth = 1,
+//      worldHeight = 1,
+//      populationSize = 200,
+//      vision = 10 / 70.0,
+//      minimumSeparation = 1 / 70.0,
+//      maxAlignTurn = Angle(math.toRadians(5)),
+//      maxCohereTurn = Angle(math.toRadians(3)),
+//      maxSeparateTurn = Angle(math.toRadians(1.5)),
+//      stepSize = 0.2 / 70.0
+//    )
 
   val model =
     Model(
       worldWidth = 1,
       worldHeight = 1,
       populationSize = 200,
-      vision = 10 / 70.0,
-      minimumSeparation = 1 / 70.0,
+      vision = 0.1,
+      minimumSeparation = 0.01,
       maxAlignTurn = Angle(math.toRadians(5)),
       maxCohereTurn = Angle(math.toRadians(3)),
       maxSeparateTurn = Angle(math.toRadians(1.5)),
-      stepSize = 0.2 / 70.0
+      stepSize = 0.01
     )
 
   val environment = Environment.empty(model.worldWidth, model.worldHeight)
@@ -211,7 +200,6 @@ object BehaviourTest extends App {
 //  println(Behaviour.defaultDescription(model, environment, 1000, new java.util.Random(100)))
 
 
-}
 
 //
 //def apply(_populationSize : Int,
