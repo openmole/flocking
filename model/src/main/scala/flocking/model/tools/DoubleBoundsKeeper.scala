@@ -1,9 +1,7 @@
-package flocking.tools
+package flocking.model.tools
 
 //---- Base types ----//
-trait DoubleBoundsKeeper {
-  val lowBound: Double
-  val highBound: Double
+case class DoubleBoundsKeeper(lowBound: Double, highBound: Double):
 
   def keepInBounds(x: Double): Double =
     if (x >= highBound) ((x - lowBound) % (highBound - lowBound)) + lowBound
@@ -11,11 +9,5 @@ trait DoubleBoundsKeeper {
         else x
 
   def apply(x: Double): Double = keepInBounds(x)
-}
 
-object DoubleBoundsKeeper {
-  def apply(_lowBound: Double, _highBound: Double) = new DoubleBoundsKeeper {
-    val lowBound = _lowBound
-    val highBound = _highBound
-  }
-}
+

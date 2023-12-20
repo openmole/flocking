@@ -1,4 +1,4 @@
-package flocking.engine
+package flocking.model
 
 import scala.math._
 import scala.collection._
@@ -6,10 +6,8 @@ import scala.util.Random
 import java.awt.Color
 
 import flocking._
-import flocking.datatypes._
-import flocking.environment._
-import flocking.tools._
-import flocking.birds._
+import flocking.model.datatypes._
+import flocking.model.tools._
 
 trait ModelReynolds {
 //  def worldWidth: Double

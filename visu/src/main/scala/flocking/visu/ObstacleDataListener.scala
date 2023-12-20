@@ -1,10 +1,9 @@
-package flocking.input
+package flocking.visu
 
-import javax.swing.Timer
 import java.awt.event._
 import java.io._
-
 import java.lang.Thread
+import javax.swing.Timer
 
 class ObstacleDataListener(delay: Int, inputPipe: String, inputMatrixSize: (Int, Int), sampleSize: (Int, Int), f: (Int,Int,Byte) => Unit) extends Thread {
 

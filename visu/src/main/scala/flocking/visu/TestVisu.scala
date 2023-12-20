@@ -1,8 +1,10 @@
 package flocking.visu
 
 import scala.math.toRadians
-import flocking.engine._
-import flocking.datatypes._
+import flocking.model.*
+import flocking.model.datatypes.*
+
+import java.util.Random
 /*
  * Copyright (C) 2021 Romain Reuillon
  *
@@ -25,11 +27,11 @@ object TestVisu extends App {
   val model = Model(
     worldWidth = 100,
     worldHeight = 100,
-    envDivsHorizontal = 100,
-    envDivsVertical = 100,
+//    envDivsHorizontal = 100,
+//    envDivsVertical = 100,
     populationSize = 300,
     vision = 9,
-    visionObstacle = 5,
+//    visionObstacle = 5,
     minimumSeparation = 1,
     maxAlignTurn = Angle(toRadians(5)),
     maxCohereTurn = Angle(toRadians(3)),
@@ -38,17 +40,24 @@ object TestVisu extends App {
   )
 
 
+  val environment = Environment.buildEmpty(Visu.backgroundColorRGB, 100, 100, 100, 100)
+
+  // model.env.addDisc(model.worldWidth / 2.0, model.worldHeight / 2.0, 30.0, visu.obstacleColorRGB)
+
+  environment.addDisc(0, 0, 30.0, Visu.obstacleColorRGB)
+
+  val random = new Random(42)
+
   val visu = Visu(
     model = TestVisu.model,
+    environment = environment,
+    random = random,
     pixelWidth = 500,
     pixelHeight = 500,
     frameDelay = 1000 / 24,
     birdLength = 0.02 * 500,
     birdWidth = 2
   )
-
-  // model.env.addDisc(model.worldWidth / 2.0, model.worldHeight / 2.0, 30.0, visu.obstacleColorRGB)
-  model.env.addDisc(0, 0, 30.0, visu.obstacleColorRGB)
 
   // val visu = new Visu with Fullscreen {
   //       lazy val model: Model = TestVisu.model

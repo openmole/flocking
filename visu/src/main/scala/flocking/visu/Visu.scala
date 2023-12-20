@@ -29,35 +29,43 @@ import scala.swing.event._
 import scala.math._
 
 import flocking._
-import flocking.datatypes._
-import flocking.engine._
+import flocking.model.datatypes._
+import flocking.model._
 
 object Visu {
-  def apply(model: Model, pixelWidth: Int, pixelHeight: Int, frameDelay: Int, birdLength:Double, birdWidth:Double) =
-    new Visu(model, pixelWidth, pixelHeight, frameDelay, birdLength, birdWidth, fullScreen = false)
+  def apply(model: Model, environment: Environment[Int], random: java.util.Random, pixelWidth: Int, pixelHeight: Int, frameDelay: Int, birdLength:Double, birdWidth:Double) =
+    new Visu(model, environment, random, pixelWidth, pixelHeight, frameDelay, birdLength, birdWidth, fullScreen = false)
 
-  def fullScreen(model: Model, frameDelay: Int, birdLength:Double, birdWidth:Double) =  {
+  def fullScreen(model: Model, environment: Environment[Int], random: java.util.Random, frameDelay: Int, birdLength:Double, birdWidth:Double) =  {
     val gd = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
     val pixelWidth: Int = gd.getDisplayMode().getWidth()
     val pixelHeight: Int = gd.getDisplayMode().getHeight()
-    new Visu(model, pixelWidth, pixelHeight, frameDelay, birdLength, birdWidth, fullScreen = true)
+    new Visu(model, environment, random, pixelWidth, pixelHeight, frameDelay, birdLength, birdWidth, fullScreen = true)
   }
+
+  class ModelIterator(model: Model, var currentState: GraphBirds) {
+    def step = {
+      currentState = Model.oneStep(model, currentState)
+    }
+  }
+
+  lazy val backgroundColorRGB:Int = new Color(0,0,0).getRGB()
+  lazy val obstacleColorRGB:Int = new Color(0,0,255).getRGB()
+  lazy val birdColor: Color = new Color(255,255,255)
 }
 
-class Visu(model: Model, pixelWidth: Int, pixelHeight: Int, frameDelay: Int, birdLength:Double, birdWidth:Double, fullScreen: Boolean) {
+class Visu(model: Model, environment: Environment[Int], random: java.util.Random, pixelWidth: Int, pixelHeight: Int, frameDelay: Int, birdLength:Double, birdWidth:Double, fullScreen: Boolean) {
 
   lazy val ge = GraphicsEnvironment.getLocalGraphicsEnvironment()
   lazy val gd = ge.getDefaultScreenDevice()
   lazy val gc = gd.getDefaultConfiguration()
 
-  lazy val backgroundImage: BufferedImage = new BufferedImage(model.env.nCellsWide, model.env.nCellsHigh, BufferedImage.TYPE_INT_RGB)
-  lazy val scaleBackgroundImage: AffineTransform = AffineTransform.getScaleInstance(pixelWidth / model.env.nCellsWide.toDouble, pixelHeight / model.env.nCellsHigh.toDouble)
-  lazy val backgroundColorRGB:Int = new Color(0,0,0).getRGB()
-  lazy val obstacleColorRGB:Int = new Color(0,0,255).getRGB()
-  lazy val birdColor: Color = new Color(255,255,255)
+  lazy val backgroundImage: BufferedImage = new BufferedImage(environment.nCellsWide, environment.nCellsHigh, BufferedImage.TYPE_INT_RGB)
+  lazy val scaleBackgroundImage: AffineTransform = AffineTransform.getScaleInstance(pixelWidth / environment.nCellsWide.toDouble, pixelHeight / environment.nCellsHigh.toDouble)
+
 
   lazy val timer = new Timer(frameDelay, Surface)
-  lazy val modelStepByStep = new ModelIterator(model)
+  lazy val modelStepByStep = new Visu.ModelIterator(model, Model.randomInit(model, environment, random))
 
   lazy val visuMainFrame =
     if(!fullScreen)
@@ -76,10 +84,10 @@ class Visu(model: Model, pixelWidth: Int, pixelHeight: Int, frameDelay: Int, bir
 
   def shapeBird(x: Double,y: Double,heading: Heading): Shape = {
     new Line2D.Double(
-      (x / model.worldWidth * pixelWidth + (birdLength / 2) * cos(heading.toDouble())),
-      (y / model.worldHeight * pixelHeight + (birdLength / 2) * sin(heading.toDouble())),
-      (x / model.worldWidth * pixelWidth - (birdLength / 2) * cos(heading.toDouble())),
-      (y / model.worldHeight * pixelHeight - (birdLength / 2) * sin(heading.toDouble()))
+      (x / model.worldWidth * pixelWidth + (birdLength / 2) * cos(heading.toDouble)),
+      (y / model.worldHeight * pixelHeight + (birdLength / 2) * sin(heading.toDouble)),
+      (x / model.worldWidth * pixelWidth - (birdLength / 2) * cos(heading.toDouble)),
+      (y / model.worldHeight * pixelHeight - (birdLength / 2) * sin(heading.toDouble))
     )
   }
 
@@ -90,8 +98,8 @@ class Visu(model: Model, pixelWidth: Int, pixelHeight: Int, frameDelay: Int, bir
     drawBirds(modelStepByStep.currentState.birds.map(b => (b.position.x, b.position.y, b.heading)))
 
   def updateBackground() = {
-    val envWidth: Double = model.env.width
-    val envHeight: Double = model.env.height
+    val envWidth: Double = environment.width
+    val envHeight: Double = environment.height
     // var i: Int = 0
     // var j: Int = 0
     // i = 0
@@ -104,7 +112,7 @@ class Visu(model: Model, pixelWidth: Int, pixelHeight: Int, frameDelay: Int, bir
     //   }
     //   i += 1
     // }
-    backgroundImage.setRGB(0,0, model.env.nCellsWide, model.env.nCellsHigh, model.env.pixels, 0, model.env.nCellsWide)
+    backgroundImage.setRGB(0,0, environment.nCellsWide, environment.nCellsHigh, environment.pixels, 0, environment.nCellsWide)
   }
 
   object Surface extends Panel with ActionListener  {
@@ -118,7 +126,7 @@ class Visu(model: Model, pixelWidth: Int, pixelHeight: Int, frameDelay: Int, bir
         RenderingHints.VALUE_ANTIALIAS_ON);
       g.setBackground(Color.black)
       g.clearRect(0,0,pixelWidth,pixelHeight)
-      g.setColor(birdColor)
+      g.setColor(Visu.birdColor)
       //for {s <- obstaclesShapes} g.fill(s)
       updateBackground()
       g.drawImage(backgroundImage, scaleBackgroundImage, null)

@@ -1,6 +1,7 @@
-package flocking.datatypes
+package flocking.model.datatypes
 
-case class Angle(value: Double) {
+
+case class Angle(value: Double):
   def unary_- = Angle(-value)
   def abs = Angle(value.abs)
   def <(a: Angle): Boolean = value < a.value
@@ -12,4 +13,3 @@ case class Angle(value: Double) {
   def -(a: Angle): Angle = Angle(value - a.value)
 
   def toDouble() = value
-}
